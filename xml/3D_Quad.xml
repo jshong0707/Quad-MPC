@@ -1,0 +1,177 @@
+<mujoco model="3D_Quad">
+    <!-- 외부 파일 include (시각 요소, 환경 설정 등) -->
+    <include file="./visual.xml"/>
+    <include file="./skybox.xml"/>
+    <include file="./materials.xml"/>
+    <compiler angle="degree" coordinate="local"/>
+    <option timestep="0.001" integrator="RK4" gravity="0 0 -9.81"/>
+    <default>
+        <geom
+            friction="1 1 1"
+            density="1000"
+            margin="0.002"
+            condim="3"
+            contype="1"
+            conaffinity="1"
+        />
+    </default>
+    <worldbody>
+        <!-- 카메라 / 라이트 -->
+        <camera name="sideview" pos="3 0 1" euler="0 90 0" fovy="45"/>
+        <light name="light" pos="0 0 2"/>
+        <!-- 바닥 -->
+        <geom name="floor" type="plane" size="30 30 0.2" material="grid" pos="0 0 0"/>
+        <!-- ────────────────────────────────
+             몸통(전방)
+           ──────────────────────────────── -->
+        <body name="torso_front" pos="0 0 0.3536">
+            <!-- 질량/관성: 원본값 유지 -->
+            <inertial pos="0.125 0 0" mass="10" diaginertia="0.0045 0.0339 0.0339"/>
+            <freejoint/>
+            <geom
+                type="box"
+                size="0.125 0.1 0.01"
+                pos="0.125 0 0"
+                rgba="0.3 0.3 0.3 1"
+            />
+            <site name="imu" pos="0 0 0" size="0.01" rgba="1 0 0 1"/>
+            <!--============================================-->
+            <!-- 1) 앞다리(왼쪽): Hip (Abduction + Flexion) -->
+            <!--============================================-->
+            <body name="front_hip_left_abd" pos="0.25 0.15 0" euler="0 90 0">
+                <!-- abduction body: 질량/관성 설정 -->
+                <inertial mass="0.2" diaginertia="0.0005 0.0005 0.0005" pos="0 0 0"/>
+                <!-- abduction hinge joint -->
+                <joint name="front_hip_left_abd"
+                       type="hinge"
+                       axis="0 0 1"
+                       limited="true"
+                       range="-50 50"  frictionloss="0.1"/>
+                <!-- 자식 body: flexion hinge -->
+                <body name="front_thigh_left" pos="0 0 0">
+                    <inertial pos="0 0 -0.125" mass="1.5" diaginertia="0.0084 0.0084 0.00047"/>
+                    <joint name="front_hip_left" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                    <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.025" rgba="0.1 0.1 0.1 1"/>
+                    <!-- 무릎 -->
+                    <body name="front_shin_left" pos="0 0 -0.25">
+                        <inertial pos="0 0 -0.125" mass="1.0" diaginertia="0.0052 0.0052 0.0002"/>
+                        <joint name="front_knee_left" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                        <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.02" rgba="0.1 0.1 0.1 1"/>
+                        <site name="front_foot_left" pos="0 0 -0.25" size="0.01" rgba="0 1 0 1"/>
+                    </body>
+                </body>
+            </body>
+            <!--=============================================-->
+            <!-- 2) 앞다리(오른쪽): Hip (Abduction + Flexion) -->
+            <!--=============================================-->
+            <body name="front_hip_right_abd" pos="0.25 -0.15 0" euler="0 90 0">
+                <inertial mass="0.2" diaginertia="0.0005 0.0005 0.0005" pos="0 0 0"/>
+                <joint name="front_hip_right_abd"
+                       type="hinge"
+                       axis="0 0 1"
+                       limited="true"
+                       range="-50 50" frictionloss="0.1"/>
+                <body name="front_thigh_right" pos="0 0 0">
+                    <inertial pos="0 0 -0.125" mass="1.5" diaginertia="0.0084 0.0084 0.00047"/>
+                    <joint name="front_hip_right" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                    <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.025" rgba="0.1 0.1 0.1 1"/>
+                    <body name="front_shin_right" pos="0 0 -0.25">
+                        <inertial pos="0 0 -0.125" mass="1.0" diaginertia="0.0052 0.0052 0.0002"/>
+                        <joint name="front_knee_right" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                        <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.02" rgba="0.1 0.1 0.1 1"/>
+                        <site name="front_foot_right" pos="0 0 -0.25" size="0.01" rgba="0 1 0 1"/>
+                    </body>
+                </body>
+            </body>
+            <!-- ───────────────────────────────
+                 뒤쪽 몸통 (Spine)
+               ─────────────────────────────── -->
+            <body name="torso_back" pos="0 0 0">
+                <inertial pos="-0.125 0 0" mass="10" diaginertia="0.0045 0.0339 0.0339"/>
+                <geom type="box" size="0.125 0.1 0.01" pos="-0.125 0 0" rgba="0.2 0.2 0.2 1"/>
+                <!-- 허리(waist) hinge -->
+                <!-- <joint name="waist" type="hinge" axis="0 -1 0" limited="true" range="-30 30"/> -->
+                <!--=========================================-->
+                <!-- 3) 뒷다리(왼쪽): Hip (Abduction + Flexion) -->
+                <!--=========================================-->
+                <body name="back_hip_left_abd" pos="-0.25 0.15 0" euler="0 90 0">
+                    <inertial mass="0.2" diaginertia="0.0005 0.0005 0.0005" pos="0 0 0"/>
+                    <joint name="back_hip_left_abd"
+                           type="hinge"
+                           axis="0 0 1"
+                           limited="true"
+                           range="-50 50" frictionloss="0.1"/>
+                    <body name="back_thigh_left" pos="0 0 0">
+                        <inertial pos="0 0 -0.125" mass="1.5" diaginertia="0.0084 0.0084 0.00047"/>
+                        <joint name="back_hip_left" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                        <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.025" rgba="0.1 0.1 0.1 1"/>
+                        <body name="back_shin_left" pos="0 0 -0.25">
+                            <inertial pos="0 0 -0.125" mass="1.0" diaginertia="0.0052 0.0052 0.0002"/>
+                            <joint name="back_knee_left" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                            <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.02" rgba="0.1 0.1 0.1 1"/>
+                            <site name="back_foot_left" pos="0 0 -0.25" size="0.01" rgba="0 1 0 1"/>
+                        </body>
+                    </body>
+                </body>
+                <!--==========================================-->
+                <!-- 4) 뒷다리(오른쪽): Hip (Abduction + Flexion) -->
+                <!--==========================================-->
+                <body name="back_hip_right_abd" pos="-0.25 -0.15 0" euler="0 90 0">
+                    <inertial mass="0.2" diaginertia="0.0005 0.0005 0.0005" pos="0 0 0"/>
+                    <joint name="back_hip_right_abd"
+                           type="hinge"
+                           axis="0 0 1"
+                           limited="true"
+                           range="-50 50" frictionloss="0.1"/>
+                    <body name="back_thigh_right" pos="0 0 0">
+                        <inertial pos="0 0 -0.125" mass="1.5" diaginertia="0.0084 0.0084 0.00047"/>
+                        <joint name="back_hip_right" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                        <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.025" rgba="0.1 0.1 0.1 1"/>
+                        <body name="back_shin_right" pos="0 0 -0.25">
+                            <inertial pos="0 0 -0.125" mass="1.0" diaginertia="0.0052 0.0052 0.0002"/>
+                            <joint name="back_knee_right" type="hinge" axis="0 -1 0" limited="true" range="0 180" frictionloss="0.1"/>
+                            <geom type="capsule" fromto="0 0 0 0 0 -0.25" size="0.02" rgba="0.1 0.1 0.1 1"/>
+                            <site name="back_foot_right" pos="0 0 -0.25" size="0.01" rgba="0 1 0 1"/>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+    <actuator>
+
+        <!-- ==== Front ==== -->
+        <motor joint="front_hip_left_abd"  ctrlrange="-100 100" gear="1"/>
+        <motor joint="front_hip_left"   ctrlrange="-100 100" gear="1"/>
+        <motor joint="front_knee_left"  ctrlrange="-100 100" gear="1"/>
+        <motor joint="front_hip_right_abd" ctrlrange="-100 100" gear="1"/>
+        <motor joint="front_hip_right"  ctrlrange="-100 100" gear="1"/>
+        <motor joint="front_knee_right" ctrlrange="-100 100" gear="1"/>
+        
+        
+        <!-- 허리(Spine) -->
+        <!-- <motor joint="waist" ctrlrange="-100 100" gear="1"/> -->
+
+        <!-- ==== Back ==== -->
+        <motor joint="back_hip_left_abd"   ctrlrange="-100 100" gear="1"/>
+        <motor joint="back_hip_left"    ctrlrange="-100 100" gear="1"/>
+        <motor joint="back_knee_left"   ctrlrange="-100 100" gear="1"/>
+        <motor joint="back_hip_right_abd"  ctrlrange="-100 100" gear="1"/>
+        <motor joint="back_hip_right"   ctrlrange="-100 100" gear="1"/>
+        <motor joint="back_knee_right"  ctrlrange="-100 100" gear="1"/>
+    </actuator>
+    <sensor>
+        <!-- IMU (torso_front) -->
+        <accelerometer site="imu" name="imu_accl"/>
+        <gyro          site="imu" name="imu_gyro"/>
+        <framelinvel  name="trunk_vel"  objtype="site" objname="imu" />
+
+        <!-- 발바닥 Force Sensor -->
+        <force site="front_foot_left"  name="front_foot_force_left"/>
+        <force site="front_foot_right" name="front_foot_force_right"/>
+        <force site="back_foot_left"   name="back_foot_force_left"/>
+        <force site="back_foot_right"  name="back_foot_force_right"/>
+
+
+    </sensor>
+</mujoco>
